@@ -3,31 +3,41 @@ pipeline {
 
     stages {
 
-        stage("Code Clone") {
+        stage("Code") {
             steps {
-                git branch: 'master', url: 'https://github.com/LondheShubham153/two-tier-flask-app.git'
+                echo "code in progress......"
+                git url: "https://github.com/manish07648/two-tier-flask-app.git", branch: "master"
+                echo "cloning done"
             }
         }
 
         stage("Build") {
             steps {
+                echo "Docker build bhi ho gaya"
                 sh "docker build -t two-tier-flask-app ."
             }
         }
 
         stage("Test") {
             steps {
-                echo "Tests running..."
+                echo "testing bhi hogi"
             }
         }
 
         stage("Push to Docker Hub") {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhubcreds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                echo "docker hub pa push in progress....."
+
+                withCredentials([usernamePassword(
+                    credentialsId: "dockerhubcreds",
+                    usernameVariable: "dockerHubUser",
+                    passwordVariable: "dockerHubPass"
+                )]) {
+
                     sh '''
-                    echo $PASS | docker login -u $USER --password-stdin
-                    docker tag two-tier-flask-app $USER/two-tier-flask-app
-                    docker push $USER/two-tier-flask-app
+                    echo $dockerHubPass | docker login -u $dockerHubUser --password-stdin
+                    docker tag two-tier-flask-app $dockerHubUser/two-tier-flask-app
+                    docker push $dockerHubUser/two-tier-flask-app:latest
                     '''
                 }
             }
@@ -35,7 +45,9 @@ pipeline {
 
         stage("Deploy") {
             steps {
+                echo "Docker Deploy ho raha ha"
                 sh "docker compose up -d --build"
+                echo "Deployment Done"
             }
         }
     }
